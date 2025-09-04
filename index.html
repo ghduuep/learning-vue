@@ -14,7 +14,7 @@
   </head>
   <body>
     <div id="app">
-      <div class="container">
+      <div class="container bg-info-subtle p-3">
         <h1 class="text-center p-3">MoviePedia</h1>
         <div class="m-3 text-center">
           <input
@@ -29,16 +29,22 @@
             v-model="newMovie.year"
             placeholder="Ano de lançamento"
           />
-          <button class="btn btn-primary mt-4" @click="addMovie">
-            Adicionar Filme
-          </button>
+          <div class="button-group d-flex gap-3 justify-content-center">
+            <button class="btn btn-primary mt-4" @click="addMovie">
+              Adicionar Filme
+            </button>
+            <button class="btn btn-secondary mt-4" @click="removeMovie">
+              Remover Filme
+            </button>
+          </div>
         </div>
         <hr />
         <div class="container text-center">
           <h2>Filmes Adicionados</h2>
+          <span class="badge rounded-pill text-bg-danger mb-3" v-if="msgErro">Limite alcançado</span>
           <ul class="list-group">
-            <li class="list-group-item" v-for="movie in movies">
-              {{ movie.title }} ({{ movie.year }})
+            <li class="list-group-item" v-for="movie in formatMovieObjectText">
+              {{ movie }}
             </li>
           </ul>
         </div>
@@ -46,32 +52,55 @@
     </div>
 
     <script>
-      const { createApp, ref, reactive } = Vue;
+      const { createApp, ref, reactive, computed, watch } = Vue;
 
       let movies = reactive([
         { title: "Esqueceram de mim", year: 1990 },
         { title: "Shrek", year: 2001 },
         { title: "O poderoso chefão", year: 1972 },
-        { title: "Pulp Fiction", year: 1994 },
-        { title: "Forrest Gump", year: 1994 },
-        { title: "A origem", year: 2010 },
-        { title: "O senhor dos anéis", year: 2001 },
-        { title: "Matrix", year: 1999 },
-        { title: "Clube da luta", year: 1999 },
-        { title: "Star Wars", year: 1977 },
       ]);
 
       let newMovie = reactive({ title: "", year: null });
+      let msgErro = ref(false);
 
       const app = createApp({
         setup() {
+
+          const getLimiteAlcançado = computed(() => {
+            return movies.length >= 5;
+          })
+
+          watch(movies, () => {
+            if (movies.length >= 5) {
+              msgErro.value = true;
+            } else{
+              msgErro.value = false;
+            }
+              
+          });
+          
           function addMovie() {
+            if (newMovie.title == "" || newMovie.year == null) {
+              alert("Por favor, insira informações válidas.");
+            }
+            if (movies.length >= 5) {
+              alert("Limite de 5 filmes atingido.");
+              return;
+            }
             movies.push({ title: newMovie.title, year: newMovie.year });
             newMovie.title = "";
             newMovie.year = null;
           }
 
-          return { movies, newMovie, addMovie };
+          function removeMovie() {
+            movies.pop();
+          }
+
+          const formatMovieObjectText = computed(() => {
+            return movies.map((movie) => `${movie.title} foi lançado em (${movie.year}).`);
+          });
+
+          return { movies, newMovie, addMovie, removeMovie, formatMovieObjectText, getLimiteAlcançado, msgErro };
         },
       }).mount("#app");
     </script>
